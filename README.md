@@ -1,8 +1,8 @@
-# French ID NER Data Generator
+# ID NER Data Generator
 
-**Production-ready synthetic French ID card generator for Named Entity Recognition (NER) training.**
+**Production-ready synthetic ID card generator for Named Entity Recognition (NER) training.**
 
-Generate unlimited, diverse French identity card data with **100% accurate** entity annotations using the Faker library. Supports 20+ languages for maximum training diversity.
+Generate unlimited, diverse identity card data with **100% accurate** entity annotations using the Faker library. Supports 20+ languages for maximum training diversity.
 
 ---
 
@@ -39,28 +39,28 @@ cd ner-data-generator
 
 ## 🚀 Quick Start
 
-### Generate 100 French ID cards (default locales)
+### Generate 100 ID cards (default locales)
 
 ```bash
-python generate_french_id_ner_faker.py -o output.json -c 100
+python generate_id_ner_faker.py -o output.json -c 100
 ```
 
 ### Use specific locales
 
 ```bash
-python generate_french_id_ner_faker.py -o output.json -c 500 --locales fr_FR,ar_EG,zh_CN
+python generate_id_ner_faker.py -o output.json -c 500 --locales fr_FR,ar_EG,zh_CN
 ```
 
 ### Maximum diversity - all 20 locales
 
 ```bash
-python generate_french_id_ner_faker.py -o output.json -c 1000 --all-locales
+python generate_id_ner_faker.py -o output.json -c 1000 --all-locales
 ```
 
 ### With noise control
 
 ```bash
-python generate_french_id_ner_faker.py -o output.json -c 1000 --noise-level medium --all-locales
+python generate_id_ner_faker.py -o output.json -c 1000 --noise-level medium --all-locales
 ```
 
 ---
@@ -70,7 +70,7 @@ python generate_french_id_ner_faker.py -o output.json -c 1000 --noise-level medi
 List all available locales:
 
 ```bash
-python generate_french_id_ner_faker.py --list-locales
+python generate_id_ner_faker.py --list-locales
 ```
 
 **Supported locales:**
@@ -116,16 +116,16 @@ Control OCR-style noise with 4 presets in `config.json`:
 
 ```bash
 # Clean data (no noise)
-python generate_french_id_ner_faker.py -o output.json -c 100 --noise-level clean
+python generate_id_ner_faker.py -o output.json -c 100 --noise-level clean
 
 # Light noise (5%)
-python generate_french_id_ner_faker.py -o output.json -c 100 --noise-level light
+python generate_id_ner_faker.py -o output.json -c 100 --noise-level light
 
 # Medium noise (15% - default)
-python generate_french_id_ner_faker.py -o output.json -c 100 --noise-level medium
+python generate_id_ner_faker.py -o output.json -c 100 --noise-level medium
 
 # Heavy noise (30%)
-python generate_french_id_ner_faker.py -o output.json -c 100 --noise-level heavy
+python generate_id_ner_faker.py -o output.json -c 100 --noise-level heavy
 ```
 
 ### Noise Types
@@ -188,7 +188,7 @@ Generated JSON contains arrays of items with `text` and `entities`:
 
 Open `verify_ner_data.html` in your browser to:
 
-- **Visually inspect** generated French ID cards
+- **Visually inspect** generated ID cards
 - **Verify entity positions** with color-coded highlighting
 - **Navigate** through dataset with keyboard arrows (←/→)
 - **Check statistics** (total items, entities, accuracy)
@@ -234,7 +234,7 @@ Shows:
 
 ```bash
 # 5000 samples, all locales, medium noise
-python generate_french_id_ner_faker.py \
+python generate_id_ner_faker.py \
     -o training_data.json \
     -c 5000 \
     --all-locales \
@@ -245,7 +245,7 @@ python generate_french_id_ner_faker.py \
 
 ```bash
 # 1000 samples, default locales, no noise
-python generate_french_id_ner_faker.py \
+python generate_id_ner_faker.py \
     -o validation_data.json \
     -c 1000 \
     --noise-level clean
@@ -255,7 +255,7 @@ python generate_french_id_ner_faker.py \
 
 ```bash
 # Arabic and Chinese names only
-python generate_french_id_ner_faker.py \
+python generate_id_ner_faker.py \
     -o arabic_chinese.json \
     -c 500 \
     --locales ar_SA,ar_EG,zh_CN \
@@ -278,7 +278,7 @@ python verify_positions.py training_data.json
 
 ```
 deepseek/
-├── generate_french_id_ner_faker.py   # Main generator (Faker-based)
+├── generate_id_ner_faker.py   # Main generator (Faker-based)
 ├── config.json                       # Noise configuration
 ├── verify_positions.py               # Terminal verification tool
 ├── verify_ner_data.html              # Interactive HTML viewer
@@ -376,13 +376,13 @@ Edit `config.json` and set `"use_custom": true` in `custom_settings`:
 ## 📝 CLI Reference
 
 ```
-usage: generate_french_id_ner_faker.py [-h] --output OUTPUT [--count COUNT]
+usage: generate_id_ner_faker.py [-h] --output OUTPUT [--count COUNT]
                                        [--config CONFIG]
                                        [--noise-level {clean,light,medium,heavy,config}]
                                        [--locales LOCALES] [--all-locales]
                                        [--list-locales]
 
-Generate synthetic French ID NER data using Faker library
+Generate synthetic ID NER data using Faker library
 
 required arguments:
   --output OUTPUT, -o OUTPUT
@@ -424,7 +424,7 @@ text[start:end] == expected_value  # Always True
 
 ```bash
 # Generate 10 clean samples
-python generate_french_id_ner_faker.py -o test.json -c 10 --noise-level clean
+python generate_id_ner_faker.py -o test.json -c 10 --noise-level clean
 
 # Verify positions
 python verify_positions.py test.json
@@ -448,17 +448,17 @@ python verify_positions.py test.json
 
 ```bash
 # Training set: 7000 samples, medium noise, maximum diversity
-python generate_french_id_ner_faker.py \
+python generate_id_ner_faker.py \
     -o train.json -c 7000 \
     --all-locales --noise-level medium
 
 # Validation set: 1500 samples, light noise
-python generate_french_id_ner_faker.py \
+python generate_id_ner_faker.py \
     -o val.json -c 1500 \
     --all-locales --noise-level light
 
 # Test set: 1500 samples, clean (no noise)
-python generate_french_id_ner_faker.py \
+python generate_id_ner_faker.py \
     -o test.json -c 1500 \
     --all-locales --noise-level clean
 ```
@@ -498,7 +498,7 @@ python --version
 This should never happen with the Faker generator. If it does:
 
 1. Check `config.json` is valid JSON
-2. Verify no manual edits to `generate_french_id_ner_faker.py`
+2. Verify no manual edits to `generate_id_ner_faker.py`
 3. Report issue with output sample
 
 ### Low diversity
@@ -507,10 +507,10 @@ Use more locales:
 
 ```bash
 # Instead of single locale
-python generate_french_id_ner_faker.py -o output.json -c 1000 --locales fr_FR
+python generate_id_ner_faker.py -o output.json -c 1000 --locales fr_FR
 
 # Use all locales
-python generate_french_id_ner_faker.py -o output.json -c 1000 --all-locales
+python generate_id_ner_faker.py -o output.json -c 1000 --all-locales
 ```
 
 ---

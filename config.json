@@ -1,5 +1,5 @@
 {
-  "comment": "Noise configuration for French ID generator - controls OCR-style errors",
+  "comment": "Noise configuration for ID generator - controls OCR-style errors",
   
   "noise_presets": {
     "clean": {
@@ -80,14 +80,51 @@
     "O": "0",
     "0": "O",
     "S": "5",
+    "5": "S",
     "B": "8",
+    "8": "B",
     "G": "6",
-    "E": "È"
+    "6": "G",
+    "E": "È",
+    "È": "E",
+    "é": "e",
+    "e": "é",
+    "à": "a",
+    "a": "à",
+    "ù": "u",
+    "u": "ù",
+    "ç": "c",
+    "c": "ç",
+    "i": "l",
+    "t": "+",
+    "r": "n",
+    "n": "m",
+    "m": "rn",
+    "w": "vv",
+    "Q": "O",
+    "Z": "2",
+    "2": "Z",
+    "A": "4",
+    "T": "7",
+    "C": "G",
+    "U": "V",
+    "V": "U"
   },
   
   "field_typos": {
-    "Sumame": ["Sumame", "Surname", "Surnarne"],
-    "Given names": ["Given names", "Given namas", "Given narnes"]
+    "NOM": ["NOM", "N0M", "NON", "NQM", "NOIVI"],
+    "Surname": ["Surname", "Sumame", "Surnarne", "Surnarme", "Surmame", "Surnarne", "Sur name", "Sum ame"],
+    "Sumame": ["Sumame", "Surname", "Surnarne", "Suname", "Sumarne"],
+    "Given names": ["Given names", "Given namas", "Given narnes", "Givennames", "Given nanes", "Given  names", "Civen names", "6iven names"],
+    "Prénoms": ["Prénoms", "Prenoms", "Prénorns", "Prènoins", "Prénon", "Prénorrrs", "Pré noms"],
+    "SEXE": ["SEXE", "5EXE", "SEXF", "SEKE", "SE XE"],
+    "Sex": ["Sex", "5ex", "Scx", "Se x"],
+    "Nationalité": ["Nationalité", "Nationalite", "NationaIité", "Nationa1ité", "NationaIitè", "National ité", "Natíonalité"],
+    "Nationality": ["Nationality", "NationaIity", "Nationa1ity", "NationaIitv", "National ity"],
+    "Né(e) le": ["Né(e) le", "Ne(e) le", "Né(é) le", "Nè(e) le", "Ne (e) le", "Né(e)le", "Nė(e) le"],
+    "Born": ["Born", "Bom", "Bom", "8orn", "B orn"],
+    "Taille": ["Taille", "TaiIle", "TailIe", "Tai1le", "TaiIIe", "Tail le"],
+    "Height": ["Height", "Heiqht", "Heigth", "Heíght", "He ight", "Hei ght"]
   },
   
   "extra_chars_pool": [" ", ".", ",", "-", ":", "l", "I", "1", "|"],

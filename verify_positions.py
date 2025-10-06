@@ -16,7 +16,7 @@ print("=" * 70)
 errors = 0
 total = 0
 
-for i, item in enumerate(data[:5], 1):  # Check first 5
+for i, item in enumerate(data, 1):  # Check all items
     text = item["text"]
     entities = item["entities"]
     
