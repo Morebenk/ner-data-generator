@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>French ID NER Data Verifier</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f8f9ff;
+        }
+        
+        .upload-area.dragover {
+            border-color: #28a745;
+            background: #f0fff4;
+        }
+        
+        .upload-area input[type="file"] {
+            display: none;
+        }
+        
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            font-size: 2em;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card p {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+        
+        button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(118, 75, 162, 0.4);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .counter {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        .card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .card-title {
+            font-size: 1.5em;
+            color: #333;
+            font-weight: 700;
+        }
+        
+        .validation-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .text-display {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            line-height: 1.8;
+            font-size: 1.1em;
+            margin-bottom: 25px;
+            border-left: 4px solid #667eea;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .entity {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            position: relative;
+            cursor: help;
+        }
+        
+        .entity:hover {
+            box-shadow: 0 0 0 2px rgba(0,0,0,0.1);
+        }
+        
+        /* Entity type colors */
+        .entity-DOC_TYPE { background: #ffd6e7; color: #c41e3a; }
+        .entity-DNI { background: #cfe2ff; color: #084298; }
+        .entity-Name { background: #d1e7dd; color: #0f5132; }
+        .entity-Surname_1 { background: #fff3cd; color: #997404; }
+        .entity-Surname_2 { background: #f8d7da; color: #842029; }
+        .entity-Surname_3 { background: #d3d3d4; color: #41464b; }
+        .entity-Gender { background: #cfe2ff; color: #052c65; }
+        .entity-Nationality { background: #e2d9f3; color: #432874; }
+        .entity-Date_of_birthday { background: #d1e7dd; color: #0a3622; }
+        .entity-Birth_place { background: #fff3cd; color: #664d03; }
+        .entity-Height { background: #f8d7da; color: #58151c; }
+        .entity-Validity_date { background: #d1ecf1; color: #055160; }
+        .entity-Issue_Date { background: #d3d3d4; color: #1b1e21; }
+        .entity-Support_number { background: #e2d9f3; color: #3d0a91; }
+        
+        .entities-list {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .entity-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e9ecef;
+            display: grid;
+            grid-template-columns: 150px 100px 1fr 60px;
+            gap: 20px;
+            align-items: center;
+            transition: background 0.2s ease;
+        }
+        
+        .entity-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .entity-item:last-child {
+            border-bottom: none;
+        }
+        
+        .entity-label {
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+        
+        .entity-position {
+            color: #666;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .entity-value {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .check-icon {
+            font-size: 1.5em;
+            color: #28a745;
+        }
+        
+        .error-icon {
+            font-size: 1.5em;
+            color: #dc3545;
+        }
+        
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 25px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+        
+        @media (max-width: 768px) {
+            .entity-item {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .navigation {
+                flex-direction: column;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 French ID NER Data Verifier</h1>
+            <p>Human verification tool for Named Entity Recognition training data</p>
+        </div>
+        
+        <div class="controls">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📄</div>
+                <h2>Drop your JSON file here or click to browse</h2>
+                <p style="margin-top: 10px; color: #666;">Supports .json files with NER annotations</p>
+                <input type="file" id="fileInput" accept=".json">
+            </div>
+            
+            <div class="stats" id="stats" style="display: none;">
+                <div class="stat-card">
+                    <h3 id="totalItems">0</h3>
+                    <p>Total Items</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="totalEntities">0</h3>
+                    <p>Total Entities</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="avgEntities">0</h3>
+                    <p>Avg per Item</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="accuracy">0%</h3>
+                    <p>Position Accuracy</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content" id="content" style="display: none;">
+            <div class="navigation">
+                <div class="nav-buttons">
+                    <button id="prevBtn" onclick="navigate(-1)">← Previous</button>
+                    <button id="nextBtn" onclick="navigate(1)">Next →</button>
+                </div>
+                <div class="counter" id="counter">Item 0 of 0</div>
+                <div class="nav-buttons">
+                    <button onclick="jumpToFirst()">⏮ First</button>
+                    <button onclick="jumpToLast()">Last ⏭</button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">📝 French ID Card Text</h2>
+                    <span class="validation-badge" id="validationBadge">✓ Valid</span>
+                </div>
+                
+                <div class="text-display" id="textDisplay"></div>
+                
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color entity-DOC_TYPE"></div> DOC_TYPE</div>
+                    <div class="legend-item"><div class="legend-color entity-DNI"></div> DNI</div>
+                    <div class="legend-item"><div class="legend-color entity-Name"></div> Name</div>
+                    <div class="legend-item"><div class="legend-color entity-Surname_1"></div> Surname_1</div>
+                    <div class="legend-item"><div class="legend-color entity-Surname_2"></div> Surname_2</div>
+                    <div class="legend-item"><div class="legend-color entity-Surname_3"></div> Surname_3</div>
+                    <div class="legend-item"><div class="legend-color entity-Gender"></div> Gender</div>
+                    <div class="legend-item"><div class="legend-color entity-Nationality"></div> Nationality</div>
+                    <div class="legend-item"><div class="legend-color entity-Date_of_birthday"></div> Date of birthday</div>
+                    <div class="legend-item"><div class="legend-color entity-Birth_place"></div> Birth_place</div>
+                    <div class="legend-item"><div class="legend-color entity-Height"></div> Height</div>
+                    <div class="legend-item"><div class="legend-color entity-Validity_date"></div> Validity_date</div>
+                    <div class="legend-item"><div class="legend-color entity-Support_number"></div> Support_number</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">🏷️ Detected Entities (<span id="entityCount">0</span>)</h2>
+                </div>
+                
+                <div class="entities-list" id="entitiesList"></div>
+            </div>
+        </div>
+        
+        <div class="empty-state" id="emptyState">
+            <div class="empty-state-icon">📋</div>
+            <h2>No Data Loaded</h2>
+            <p>Upload a JSON file to start verification</p>
+        </div>
+    </div>
+    
+    <script>
+        let data = [];
+        let currentIndex = 0;
+        
+        // Upload area interactions
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+        
+        function handleFile(file) {
+            if (!file.name.endsWith('.json')) {
+                alert('Please upload a JSON file');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    data = JSON.parse(e.target.result);
+                    if (!Array.isArray(data) || data.length === 0) {
+                        alert('Invalid JSON format. Expected array of items.');
+                        return;
+                    }
+                    
+                    currentIndex = 0;
+                    displayData();
+                    showContent();
+                    calculateStats();
+                } catch (error) {
+                    alert('Error parsing JSON: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        function showContent() {
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+            document.getElementById('stats').style.display = 'grid';
+        }
+        
+        function calculateStats() {
+            const totalItems = data.length;
+            const totalEntities = data.reduce((sum, item) => sum + item.entities.length, 0);
+            const avgEntities = (totalEntities / totalItems).toFixed(1);
+            
+            // Calculate position accuracy
+            let correct = 0;
+            let total = 0;
+            
+            data.forEach(item => {
+                item.entities.forEach(entity => {
+                    total++;
+                    const [start, end, label, expected] = entity;
+                    const actual = item.text.substring(start, end);
+                    if (actual === expected) {
+                        correct++;
+                    }
+                });
+            });
+            
+            const accuracy = total > 0 ? ((correct / total) * 100).toFixed(1) : 0;
+            
+            document.getElementById('totalItems').textContent = totalItems;
+            document.getElementById('totalEntities').textContent = totalEntities;
+            document.getElementById('avgEntities').textContent = avgEntities;
+            document.getElementById('accuracy').textContent = accuracy + '%';
+        }
+        
+        function displayData() {
+            const item = data[currentIndex];
+            const text = item.text;
+            const entities = item.entities;
+            
+            // Update counter
+            document.getElementById('counter').textContent = `Item ${currentIndex + 1} of ${data.length}`;
+            document.getElementById('entityCount').textContent = entities.length;
+            
+            // Create highlighted text
+            let highlightedText = '';
+            let lastIndex = 0;
+            let allValid = true;
+            
+            // Sort entities by start position
+            const sortedEntities = [...entities].sort((a, b) => a[0] - b[0]);
+            
+            sortedEntities.forEach(entity => {
+                const [start, end, label, expected] = entity;
+                const actual = text.substring(start, end);
+                
+                // Add text before entity
+                highlightedText += escapeHtml(text.substring(lastIndex, start));
+                
+                // Add highlighted entity
+                const isValid = actual === expected;
+                if (!isValid) allValid = false;
+                
+                const className = `entity entity-${label.replace(/ /g, '_')} ${!isValid ? 'error' : ''}`;
+                highlightedText += `<span class="${className}" title="${label}: [${start}:${end}]">${escapeHtml(actual)}</span>`;
+                
+                lastIndex = end;
+            });
+            
+            // Add remaining text
+            highlightedText += escapeHtml(text.substring(lastIndex));
+            
+            document.getElementById('textDisplay').innerHTML = highlightedText;
+            
+            // Update validation badge
+            const badge = document.getElementById('validationBadge');
+            if (allValid) {
+                badge.className = 'validation-badge badge-success';
+                badge.textContent = '✓ All positions valid';
+            } else {
+                badge.className = 'validation-badge badge-error';
+                badge.textContent = '✗ Position errors detected';
+            }
+            
+            // Display entities list
+            displayEntitiesList(text, entities);
+            
+            // Update navigation buttons
+            document.getElementById('prevBtn').disabled = currentIndex === 0;
+            document.getElementById('nextBtn').disabled = currentIndex === data.length - 1;
+        }
+        
+        function displayEntitiesList(text, entities) {
+            const list = document.getElementById('entitiesList');
+            list.innerHTML = '';
+            
+            entities.forEach(entity => {
+                const [start, end, label, expected] = entity;
+                const actual = text.substring(start, end);
+                const isValid = actual === expected;
+                
+                const item = document.createElement('div');
+                item.className = 'entity-item';
+                
+                const labelSpan = document.createElement('div');
+                labelSpan.className = `entity-label entity-${label.replace(/ /g, '_')}`;
+                labelSpan.textContent = label;
+                
+                const position = document.createElement('div');
+                position.className = 'entity-position';
+                position.textContent = `[${start}:${end}]`;
+                
+                const value = document.createElement('div');
+                value.className = 'entity-value';
+                if (isValid) {
+                    value.textContent = actual;
+                } else {
+                    value.innerHTML = `Expected: "${escapeHtml(expected)}"<br>Got: "${escapeHtml(actual)}"`;
+                }
+                
+                const check = document.createElement('div');
+                check.innerHTML = isValid ? '<span class="check-icon">✓</span>' : '<span class="error-icon">✗</span>';
+                
+                item.appendChild(labelSpan);
+                item.appendChild(position);
+                item.appendChild(value);
+                item.appendChild(check);
+                
+                list.appendChild(item);
+            });
+        }
+        
+        function navigate(direction) {
+            const newIndex = currentIndex + direction;
+            if (newIndex >= 0 && newIndex < data.length) {
+                currentIndex = newIndex;
+                displayData();
+            }
+        }
+        
+        function jumpToFirst() {
+            currentIndex = 0;
+            displayData();
+        }
+        
+        function jumpToLast() {
+            currentIndex = data.length - 1;
+            displayData();
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (data.length === 0) return;
+            
+            if (e.key === 'ArrowLeft') {
+                navigate(-1);
+            } else if (e.key === 'ArrowRight') {
+                navigate(1);
+            } else if (e.key === 'Home') {
+                jumpToFirst();
+            } else if (e.key === 'End') {
+                jumpToLast();
+            }
+        });
+    </script>
+</body>
+</html>

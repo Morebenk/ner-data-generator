@@ -1,0 +1,101 @@
+{
+  "comment": "Noise configuration for French ID generator - controls OCR-style errors",
+  
+  "noise_presets": {
+    "clean": {
+      "description": "No noise - perfect OCR quality",
+      "enabled": false
+    },
+    "light": {
+      "description": "Minimal noise - high quality OCR (5% error rate)",
+      "enabled": false,
+      "global_probability": 0.05,
+      "word_noise": 0.03,
+      "spacing_noise": 0.02,
+      "char_substitution": 0.01,
+      "char_extra": 0.01,
+      "char_missing": 0.005,
+      "char_double": 0.005
+    },
+    "medium": {
+      "description": "Realistic noise - typical OCR quality (15% error rate)",
+      "enabled": true,
+      "global_probability": 0.15,
+      "word_noise": 0.10,
+      "spacing_noise": 0.08,
+      "char_substitution": 0.05,
+      "char_extra": 0.02,
+      "char_missing": 0.015,
+      "char_double": 0.02
+    },
+    "heavy": {
+      "description": "High noise - poor OCR quality (30% error rate)",
+      "enabled": false,
+      "global_probability": 0.30,
+      "word_noise": 0.20,
+      "spacing_noise": 0.15,
+      "char_substitution": 0.10,
+      "char_extra": 0.05,
+      "char_missing": 0.04,
+      "char_double": 0.05
+    }
+  },
+  
+  "custom_settings": {
+    "comment": "Override preset with custom values (set use_custom to true)",
+    "use_custom": false,
+    "global_probability": 0.15,
+    "word_noise_probability": 0.10,
+    "spacing_noise_probability": 0.08,
+    "character_substitution_probability": 0.05,
+    "extra_char_probability": 0.02,
+    "missing_char_probability": 0.015,
+    "double_char_probability": 0.02,
+    "apply_to_entity_values": false,
+    "comment_entity": "If true, noise can affect entity values (names, numbers). If false, only affects non-entity text."
+  },
+  
+  "word_replacements": {
+    "RÉPUBLIQUE": ["RÉPUBLIQUE", "REPUBLIQUE", "RÉPUBLIOUE", "REPUBLIOQUE", "RĖPUBLIQUE"],
+    "FRANÇAISE": ["FRANÇAISE", "FRANCAISE", "FRANPAISE", "FRANÇAI5E", "FRANCAI5E"],
+    "Signature du titulaire": ["Signature du titulaire", "Sianature du tutaire", "Signature du tituIaire", "5ignature du titulaire"],
+    "Prénom(s)": ["Prénom(s)", "Prenom(s)", "Prénom(s)", "Prénom (s)", "Prenorn(s)"],
+    "Né(e)": ["Né(e)", "Ne(e)", "Né(é)", "Nè(e)", "Ne (e)"],
+    "Taille": ["Taille", "TaiIle", "TailIe", "Taiille"],
+    "Nationalité": ["Nationalité", "Nationalite", "NationaIité", "NationaIitè", "Nationa1ité"]
+  },
+  
+  "spacing_errors": {
+    "RÉPUBLIQUE FRANÇAISE": ["RÉPUBLIQUE FRANÇAISE", "RÉPUBLIQUEFRANÇAISE", "RÉPUBLIQUE  FRANÇAISE"],
+    "CARTE NATIONALE": ["CARTE NATIONALE", "CARTENATIONALE", "CARTE  NATIONALE"],
+    "D'IDENTITÉ": ["D'IDENTITÉ", "D'IDENTITE", "D' IDENTITÉ"],
+    "Nom :": ["Nom :", "Nom:", "Nom : "],
+    "Sexe :": ["Sexe :", "Sexe:", "Sexe : "],
+    "Né(e) le :": ["Né(e) le :", "Né(e) le:", "Né(e)  le :", "Né(e)le :"]
+  },
+  
+  "character_substitutions": {
+    "I": "l",
+    "l": "I",
+    "O": "0",
+    "0": "O",
+    "S": "5",
+    "B": "8",
+    "G": "6",
+    "E": "È"
+  },
+  
+  "field_typos": {
+    "Sumame": ["Sumame", "Surname", "Surnarne"],
+    "Given names": ["Given names", "Given namas", "Given narnes"]
+  },
+  
+  "extra_chars_pool": [" ", ".", ",", "-", ":", "l", "I", "1", "|"],
+  
+  "usage_instructions": {
+    "1": "Choose a preset by setting 'enabled: true' in one of the presets",
+    "2": "OR set 'use_custom: true' in custom_settings and define your own values",
+    "3": "Use CLI: --noise-level clean|light|medium|heavy to override",
+    "4": "Probabilities are 0.0 to 1.0 (0% to 100% chance)"
+  }
+}
