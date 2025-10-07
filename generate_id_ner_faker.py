@@ -72,7 +72,58 @@ class FakerIDGenerator:
         self.extra_chars = self.config.get("extra_chars_pool", [" ", ".", ",", "-"])
         self.field_typos = self.config.get("field_typos", {})
         
+        # Field generation probabilities
+        self.field_probs = self.config.get("field_generation_probabilities", {})
+        
+        # Extract simple format probabilities with backward compatibility
+        simple_format = self.field_probs.get("simple_format", {})
+        self.simple_probs = {}
+        for key, value in simple_format.items():
+            if key == "comment":
+                continue
+            if isinstance(value, dict) and "probability" in value:
+                self.simple_probs[key] = value["probability"]
+            else:
+                self.simple_probs[key] = value
+        
+        # Extract bilingual format probabilities with backward compatibility  
+        bilingual_format = self.field_probs.get("bilingual_format", {})
+        self.bilingual_probs = {}
+        for key, value in bilingual_format.items():
+            if key == "comment":
+                continue
+            if isinstance(value, dict) and "probability" in value:
+                self.bilingual_probs[key] = value["probability"]
+            else:
+                self.bilingual_probs[key] = value
+        
+        # Extract signature noise patterns with backward compatibility
+        signature_patterns = self.field_probs.get("signature_noise_patterns", {})
+        self.signature_noise = {}
+        for format_type, patterns in signature_patterns.items():
+            if format_type == "comment":
+                continue
+            self.signature_noise[format_type] = {}
+            for pattern, config in patterns.items():
+                if pattern == "comment":
+                    continue
+                if isinstance(config, dict) and "weight" in config:
+                    self.signature_noise[format_type][pattern] = config["weight"]
+                else:
+                    self.signature_noise[format_type][pattern] = config
+        
         print(f"🌍 Using {len(self.fakers)} locales: {', '.join(self.locales)}")
+    
+    def _weighted_choice(self, choices_dict: Dict[str, float]) -> str:
+        """Make a weighted random choice from a dictionary of {option: probability}."""
+        rand_val = random.random()
+        cumulative = 0.0
+        for choice, weight in choices_dict.items():
+            cumulative += weight
+            if rand_val <= cumulative:
+                return choice
+        # Fallback to last choice if rounding errors
+        return list(choices_dict.keys())[-1]
     
     def _load_noise_settings(self, noise_level: str = None):
         """Load noise probabilities from config."""
@@ -350,33 +401,71 @@ class FakerIDGenerator:
         parts.append(nationality + " ")
         pos += len(nationality) + 1
         entities.append([nat_start, pos - 1, "Nationality", nationality])
-        
-        # Optional code
-        if random.random() < 0.5:
-            code = random.choice(["BA", "AS", "CA"])
+
+        # Pre-generate names to calculate 2-letter code
+        surname = self.generate_name()
+        given_names_list = self.generate_given_names()
+
+        # Dynamic 2-letter code based on first letters of surname and first given name
+        code_prob = self.simple_probs.get("two_letter_code", 0.5)
+        if random.random() < code_prob:
+            first_letter_surname = surname[0] if surname else "A"
+            first_letter_given = given_names_list[0][0] if given_names_list else "A"
+            code = first_letter_surname + first_letter_given
             parts.append(code + " ")
-            pos += len(code) + 1
-        
+            pos += len(code + " ")
+
+        # Signature noise (before NOM like in bilingual format)
+        noise_prob = self.simple_probs.get("signature_noise_before_nom", 0.2)
+        if random.random() < noise_prob:
+            simple_noise_patterns = self.signature_noise.get("simple_format", {
+                "RF ": 0.3, "3F ": 0.2, "RERE ": 0.1, "none": 0.4
+            })
+            chosen_noise = self._weighted_choice(simple_noise_patterns)
+            if chosen_noise != "none":
+                parts.append(chosen_noise)
+                pos += len(chosen_noise)
+
         # Name (using Faker)
         name_label = "Nom : "
         name_label_noisy = self.apply_noise(name_label, allow_noise=True)
         parts.append(name_label_noisy)
         pos += len(name_label_noisy)
         
-        surname = self.generate_name()
         name_start = pos
         parts.append(surname)
         pos += len(surname)
         entities.append([name_start, pos, "Name", surname])
-        
-        # Given names (using Faker)
+
+        # Optional social status fields (Epouse, Veuve, Nom d'usage)
+        social_status_prob = self.simple_probs.get("social_status_fields", 0.3)
+        if random.random() < social_status_prob:
+            social_status_types = [
+                "Epouse: ",
+                "Veuve: ", 
+                "Nom d'usage: "
+            ]
+            social_label = random.choice(social_status_types)
+            social_label_noisy = self.apply_field_typo(social_label)
+            parts.append(" " + social_label_noisy)
+            pos += len(" " + social_label_noisy)
+            
+            alt_name = self.generate_name()
+            alt_start = pos
+            # Handle hyphenated names like "BERTAU- PETE"
+            hyphen_prob = self.simple_probs.get("hyphenated_alt_names", 0.3)
+            if random.random() < hyphen_prob:
+                alt_name = alt_name + "- " + self.generate_name()
+            parts.append(alt_name)
+            pos += len(alt_name)
+            entities.append([alt_start, pos, "Alt_name", alt_name])
+
+        # Given names (using pre-generated list)
         prenom_label = "Prénom(s)"
         prenom_label_noisy = self.apply_field_typo(prenom_label)
         prenom_full = f" {prenom_label_noisy}: "
         parts.append(prenom_full)
         pos += len(prenom_full)
-        
-        given_names_list = self.generate_given_names()
         
         for i, gname in enumerate(given_names_list):
             if i > 0:
@@ -414,7 +503,8 @@ class FakerIDGenerator:
         entities.append([birth_date_start, pos, "Date of birthday", birth_date])
         
         # Birth place (using Faker)
-        if random.random() < 0.8:
+        birth_place_prob = self.simple_probs.get("birth_place", 0.8)
+        if random.random() < birth_place_prob:
             a_label = " à "
             parts.append(a_label)
             pos += len(a_label)
@@ -426,7 +516,8 @@ class FakerIDGenerator:
             entities.append([city_start, pos, "Birth_place", city])
         
         # Height
-        if random.random() < 0.6:
+        height_prob = self.simple_probs.get("height", 0.6)
+        if random.random() < height_prob:
             taille_label = "Taille"
             taille_label_noisy = self.apply_noise(taille_label, allow_noise=True)
             taille_full = f" {taille_label_noisy} : "
@@ -440,7 +531,8 @@ class FakerIDGenerator:
             entities.append([height_start, pos, "Height", height])
         
         # Optional signature
-        if random.random() < 0.4:
+        signature_prob = self.simple_probs.get("optional_signature", 0.4)
+        if random.random() < signature_prob:
             sig_label = "Signature du titulaire"
             sig_label_noisy = self.apply_noise(sig_label, allow_noise=True)
             sig_full = f" {sig_label_noisy} :"
@@ -545,7 +637,8 @@ class FakerIDGenerator:
         entities.append([birth_date_start, pos, "Date of birthday", birth_date])
         
         # Birth place (using Faker)
-        if random.random() < 0.9:
+        birth_place_prob = self.bilingual_probs.get("birth_place", 0.9)
+        if random.random() < birth_place_prob:
             birth_place_label = " LIEU DE NAISSANCE / Place of birth "
             parts.append(birth_place_label)
             pos += len(birth_place_label)
@@ -557,7 +650,8 @@ class FakerIDGenerator:
             entities.append([city_start, pos, "Birth_place", city])
         
         # Guardian name (married name) - appears randomly for married individuals
-        if random.random() < 0.3:  # 30% chance
+        alt_name_prob = self.bilingual_probs.get("alt_name_married", 0.3)
+        if random.random() < alt_name_prob:
             guardian_label = " NOM D'USAGE / Alternate name ép. "
             guardian_label_noisy = self.apply_field_typo(guardian_label)
             parts.append(guardian_label_noisy)
@@ -567,7 +661,7 @@ class FakerIDGenerator:
             guardian_start = pos
             parts.append(guardian_name)
             pos += len(guardian_name)
-            entities.append([guardian_start, pos, "Guardian_name", guardian_name])
+            entities.append([guardian_start, pos, "Alt_name", guardian_name])
         
         # Document number
         doc_num_label = " N° DU DOCUMENT / Document No "
@@ -580,7 +674,8 @@ class FakerIDGenerator:
         entities.append([id_start, pos, "DNI", id_num])
         
         # Expiry date
-        if random.random() < 0.8:
+        expiry_prob = self.bilingual_probs.get("expiry_date", 0.8)
+        if random.random() < expiry_prob:
             expiry_label = " DATE D'EXPIR. / Expiry date "
             parts.append(expiry_label)
             pos += len(expiry_label)
@@ -592,29 +687,31 @@ class FakerIDGenerator:
             entities.append([expiry_start, pos, "Validity_date", expiry])
         
         # Support number with optional signature noise
-        if random.random() < 0.4:
+        support_prob = self.bilingual_probs.get("support_number", 0.4)
+        if random.random() < support_prob:
             parts.append(" ")
             pos += 1
             
             # Random signature noise (sometimes appears before support number)
             # This simulates OCR misreading signatures as characters
-            signature_noise_chance = random.random()
-            if signature_noise_chance < 0.3:
-                # MA prefix (most common OCR mistake)
+            bilingual_noise_patterns = self.signature_noise.get("bilingual_format", {
+                "MA ": 0.3, "random_2letter": 0.2, "random_digits": 0.1, "none": 0.4
+            })
+            chosen_noise = self._weighted_choice(bilingual_noise_patterns)
+            
+            if chosen_noise == "MA ":
                 parts.append("MA ")
                 pos += 3
-            elif signature_noise_chance < 0.5:
-                # Other random 2-letter combinations
+            elif chosen_noise == "random_2letter":
                 noise = random.choice(["AB ", "BA ", "CA ", "DA ", "KA ", "RA ", "SA "])
                 parts.append(noise)
                 pos += 3
-            elif signature_noise_chance < 0.6:
-                # Random digits (2-3 chars)
+            elif chosen_noise == "random_digits":
                 noise_len = random.choice([2, 3])
                 noise = "".join([str(random.randint(0, 9)) for _ in range(noise_len)]) + " "
                 parts.append(noise)
                 pos += len(noise)
-            # else: no signature noise (40% of the time when support number exists)
+            # else: no noise (none option)
             
             support = self.generate_support_number()
             support_start = pos

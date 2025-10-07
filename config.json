@@ -124,15 +124,123 @@
     "Né(e)": [
       "Né(e)", "Ne(e)", "Né(é)", "Nè(e)", "Ne (e)", "Né(e )", 
       "Nė(e)", "Nè(é)", "Né (e)", "Ne(é)"
+    ],
+    "Epouse: ": [
+      "Epouse: ", "Epouse : ", "Epous e: ", "Epou se: ", "Épouse: ", 
+      "Epou5e: ", "Epouse : ", "Ępouse: ", "Epouse :"
+    ],
+    "Veuve: ": [
+      "Veuve: ", "Veuve : ", "Veu ve: ", "Veuvè: ", "Veuve : ", 
+      "Veu ve : ", "Veuv e: ", "Vεuve: ", "Veuve :"
+    ],
+    "Nom d'usage: ": [
+      "Nom d'usage: ", "Nom d'usage : ", "Nom d'usage : ", "Nom d' usage: ", 
+      "Nom d'usaqe: ", "Nom d'usage : ", "Nom d'u sage: ", "Non d'usage: "
     ]
   },
   
-  "extra_chars_pool": [" ", ".", ",", "-", ":", "l", "I", "1", "|"],
+  "field_generation_probabilities": {
+    "comment": "Probabilities for optional fields and features - controls how often specific elements appear in generated IDs",
+    "simple_format": {
+      "comment": "Probabilities for simple format ID cards (70% of generated cards)",
+      "two_letter_code": {
+        "probability": 0.5,
+        "description": "Dynamic 2-letter code based on first letters of surname + first given name (e.g., MARTIN + MARIE = MM). Appears after nationality."
+      },
+      "signature_noise_before_nom": {
+        "probability": 0.0,
+        "description": "OCR noise patterns (RF, 3F, RERE) that appear before the 'Nom :' field, simulating signature interference from real scanned documents."
+      },
+      "social_status_fields": {
+        "probability": 0.3,
+        "description": "Social status fields like 'Epouse: SURNAME', 'Veuve: SURNAME', 'Nom d'usage: SURNAME' that appear after the main surname in French IDs."
+      },
+      "hyphenated_alt_names": {
+        "probability": 0.3,
+        "description": "When social status fields appear, chance for hyphenated format like 'BERTAU- PETE' instead of single surname."
+      },
+      "birth_place": {
+        "probability": 0.8,
+        "description": "City/location after birth date (e.g., 'né(e) le 15.03.1980 à PARIS'). High probability as most IDs include birth location."
+      },
+      "height": {
+        "probability": 0.6,
+        "description": "Height field in meters format (e.g., 'Taille : 1 75m'). Moderately common on French IDs."
+      },
+      "optional_signature": {
+        "probability": 0.4,
+        "description": "Signature section label 'Signature du titulaire :' at the end of the ID card."
+      }
+    },
+    "bilingual_format": {
+      "comment": "Probabilities for bilingual format ID cards (30% of generated cards) - French/English format",
+      "birth_place": {
+        "probability": 0.9,
+        "description": "Birth location field 'LIEU DE NAISSANCE / Place of birth'. Higher probability than simple format."
+      },
+      "alt_name_married": {
+        "probability": 0.3,
+        "description": "Married/alternate name field 'NOM D'USAGE / Alternate name ép. SURNAME' for married individuals."
+      },
+      "support_number": {
+        "probability": 0.4,
+        "description": "6-digit support number at the end of bilingual cards, sometimes preceded by signature noise."
+      },
+      "expiry_date": {
+        "probability": 0.8,
+        "description": "Expiry date field 'DATE D'EXPIR. / Expiry date DD MM YYYY' in bilingual format."
+      }
+    },
+    "signature_noise_patterns": {
+      "comment": "Weighted probabilities for signature noise types - simulates OCR misreading handwritten signatures as text",
+      "simple_format": {
+        "comment": "Noise patterns that appear before 'Nom :' in simple format cards",
+        "RF ": {
+          "weight": 0.3,
+          "description": "Most common OCR misreading pattern from cursive signatures"
+        },
+        "3F ": {
+          "weight": 0.2,
+          "description": "Digit/letter confusion from signature strokes"
+        },
+        "RERE ": {
+          "weight": 0.1,
+          "description": "Repeated letter pattern from looped signature elements"
+        },
+        "none": {
+          "weight": 0.4,
+          "description": "No signature noise (clean OCR)"
+        }
+      },
+      "bilingual_format": {
+        "comment": "Noise patterns that appear before support numbers in bilingual cards",
+        "MA ": {
+          "weight": 0.1,
+          "description": "Most common 2-letter OCR error from signatures in bilingual format"
+        },
+        "random_2letter": {
+          "weight": 0.2,
+          "description": "Random 2-letter combinations (AB, BA, CA, etc.) from signature misreading"
+        },
+        "random_digits": {
+          "weight": 0.1,
+          "description": "2-3 digit sequences from numerical-looking signature elements"
+        },
+        "none": {
+          "weight": 0.4,
+          "description": "No signature noise before support number"
+        }
+      }
+    }
+  },
+  
+  "extra_chars_pool": [" ", ".", ",", "-", ":", "l", "I", "1", "|", "RF", "3F", "RERE", "F", "R", "3"],
   
   "usage_instructions": {
     "1": "Choose a preset by setting 'enabled: true' in one of the presets",
     "2": "OR set 'use_custom: true' in custom_settings and define your own values",
     "3": "Use CLI: --noise-level clean|light|medium|heavy to override",
-    "4": "Probabilities are 0.0 to 1.0 (0% to 100% chance)"
+    "4": "Probabilities are 0.0 to 1.0 (0% to 100% chance)",
+    "5": "field_generation_probabilities controls optional fields and signature noise"
   }
 }
