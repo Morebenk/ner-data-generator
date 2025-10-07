@@ -2,6 +2,10 @@
 """Quick verification that positions are 100% accurate."""
 import json
 import sys
+import io
+
+# Set stdout encoding to UTF-8 for Windows compatibility
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 if len(sys.argv) < 2:
     print("Usage: python verify_positions.py <json_file>")

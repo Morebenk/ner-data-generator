@@ -288,8 +288,8 @@ class FakerIDGenerator:
         return f"{meters}{separator}{cm}{unit}"
     
     def generate_support_number(self) -> str:
-        """Generate support number."""
-        return f"MA {random.randint(100000, 999999)}"
+        """Generate support number (6-digit numeric only)."""
+        return f"{random.randint(100000, 999999)}"
     
     def generate_expiry_date(self, birth_year: int) -> str:
         """Generate expiry date."""
@@ -305,16 +305,18 @@ class FakerIDGenerator:
         entities = []
         pos = 0
         
-        # Header variations
+        # Header variations with Country entity
         header_variants = [
-            "RÉPUBLIQUE FRANÇAISE ",
-            "FRANÇAISE RÉPUBLIQUE ",
-            "RÉPUBLIQUEFRANÇAISE "
+            "RÉPUBLIQUE FRANÇAISE",
+            "FRANÇAISE RÉPUBLIQUE",
+            "RÉPUBLIQUEFRANÇAISE"
         ]
         header = random.choice(header_variants)
         header_noisy = self.apply_noise(header, allow_noise=True)
-        parts.append(header_noisy)
-        pos += len(header_noisy)
+        country_start = pos
+        parts.append(header_noisy + " ")
+        pos += len(header_noisy) + 1
+        entities.append([country_start, country_start + len(header_noisy), "Country", header_noisy])
         
         # Document type
         doc_type = "CARTE NATIONALE D'IDENTITÉ"
@@ -453,11 +455,22 @@ class FakerIDGenerator:
         entities = []
         pos = 0
         
-        # Header
-        header = "RÉPUBLIQUE FRANÇAISE FR "
+        # Header with Country entity - with variations like simple format
+        header_variants = [
+            "RÉPUBLIQUE FRANÇAISE",
+            "FRANÇAISE RÉPUBLIQUE",
+            "RÉPUBLIQUEFRANÇAISE"
+        ]
+        header = random.choice(header_variants)
         header_noisy = self.apply_noise(header, allow_noise=True)
+        country_start = pos
         parts.append(header_noisy)
         pos += len(header_noisy)
+        entities.append([country_start, pos, "Country", header_noisy])
+        
+        # Add " FR " after country
+        parts.append(" FR ")
+        pos += 4
         
         # Document type
         doc_type = "CARTE NATIONALE D'IDENTITÉ / IDENTITY CARD"
@@ -467,8 +480,9 @@ class FakerIDGenerator:
         pos += len(doc_type_noisy)
         entities.append([doc_start, pos, "DOC_TYPE", doc_type_noisy])
         
-        # Name (using Faker) - with dynamic field label noise
-        field_label = self.apply_field_typo(" NOM/Surname ")
+        # Name (using Faker) - default to "Sumame" (most common OCR error)
+        # Will occasionally change to "Surname" or other variants when noise is applied
+        field_label = self.apply_field_typo(" NOM/Sumame ")
         parts.append(field_label)
         pos += len(field_label)
         surname = self.generate_name()
@@ -494,15 +508,10 @@ class FakerIDGenerator:
             pos += len(gname)
             entities.append([gname_start, pos, f"Surname_{i+1}", gname])
         
-        # Gender
+        # Gender label (without value - value comes after birth date)
         gender_label = self.apply_field_typo(" SEXE /Sex ")
         parts.append(gender_label)
         pos += len(gender_label)
-        gender = random.choice(["M", "F"])
-        gender_start = pos
-        parts.append(gender)
-        pos += 1
-        entities.append([gender_start, pos, "Gender", gender])
         
         # Nationality label (but value comes later after date)
         nat_label = self.apply_field_typo(" NATIONALITÉ / Nationality ")
@@ -514,7 +523,14 @@ class FakerIDGenerator:
         parts.append(date_label)
         pos += len(date_label)
         
-        # Nationality value (appears before the date)
+        # Gender value (appears before nationality value)
+        gender = random.choice(["M", "F"])
+        gender_start = pos
+        parts.append(gender + " ")
+        pos += 2
+        entities.append([gender_start, gender_start + 1, "Gender", gender])
+        
+        # Nationality value (appears after gender, before the date)
         nationality = random.choice(["FRA", "ESP", "PRT", "ITA", "BEL", "MAR", "TUN", "DZA"])
         nat_start = pos
         parts.append(nationality + " ")
@@ -540,6 +556,19 @@ class FakerIDGenerator:
             pos += len(city)
             entities.append([city_start, pos, "Birth_place", city])
         
+        # Guardian name (married name) - appears randomly for married individuals
+        if random.random() < 0.3:  # 30% chance
+            guardian_label = " NOM D'USAGE / Alternate name ép. "
+            guardian_label_noisy = self.apply_field_typo(guardian_label)
+            parts.append(guardian_label_noisy)
+            pos += len(guardian_label_noisy)
+            
+            guardian_name = self.generate_name()
+            guardian_start = pos
+            parts.append(guardian_name)
+            pos += len(guardian_name)
+            entities.append([guardian_start, pos, "Guardian_name", guardian_name])
+        
         # Document number
         doc_num_label = " N° DU DOCUMENT / Document No "
         parts.append(doc_num_label)
@@ -562,16 +591,37 @@ class FakerIDGenerator:
             pos += len(expiry)
             entities.append([expiry_start, pos, "Validity_date", expiry])
         
-        # Support number
+        # Support number with optional signature noise
         if random.random() < 0.4:
             parts.append(" ")
             pos += 1
+            
+            # Random signature noise (sometimes appears before support number)
+            # This simulates OCR misreading signatures as characters
+            signature_noise_chance = random.random()
+            if signature_noise_chance < 0.3:
+                # MA prefix (most common OCR mistake)
+                parts.append("MA ")
+                pos += 3
+            elif signature_noise_chance < 0.5:
+                # Other random 2-letter combinations
+                noise = random.choice(["AB ", "BA ", "CA ", "DA ", "KA ", "RA ", "SA "])
+                parts.append(noise)
+                pos += 3
+            elif signature_noise_chance < 0.6:
+                # Random digits (2-3 chars)
+                noise_len = random.choice([2, 3])
+                noise = "".join([str(random.randint(0, 9)) for _ in range(noise_len)]) + " "
+                parts.append(noise)
+                pos += len(noise)
+            # else: no signature noise (40% of the time when support number exists)
             
             support = self.generate_support_number()
             support_start = pos
             parts.append(support)
             pos += len(support)
             entities.append([support_start, pos, "Support_number", support])
+
         
         text = "".join(parts)
         return text, entities
