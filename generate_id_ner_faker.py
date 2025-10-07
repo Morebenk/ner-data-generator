@@ -336,11 +336,18 @@ class FakerIDGenerator:
         pos += len(id_num)
         entities.append([id_start, pos, "DNI", id_num])
         
-        # Nationality
-        nat_label = " Nationalité Française "
+        # Nationality (label)
+        nat_label = " Nationalité "
         nat_label_noisy = self.apply_field_typo(nat_label)
         parts.append(nat_label_noisy)
         pos += len(nat_label_noisy)
+        
+        # Nationality value (annotated entity)
+        nationality = "Française"
+        nat_start = pos
+        parts.append(nationality + " ")
+        pos += len(nationality) + 1
+        entities.append([nat_start, pos - 1, "Nationality", nationality])
         
         # Optional code
         if random.random() < 0.5:
@@ -497,19 +504,24 @@ class FakerIDGenerator:
         pos += 1
         entities.append([gender_start, pos, "Gender", gender])
         
-        # Nationality
+        # Nationality label (but value comes later after date)
         nat_label = self.apply_field_typo(" NATIONALITÉ / Nationality ")
         parts.append(nat_label)
         pos += len(nat_label)
+        
+        # Birth date label
+        date_label = "DATE DE NAISS. / Date of birth "
+        parts.append(date_label)
+        pos += len(date_label)
+        
+        # Nationality value (appears before the date)
         nationality = random.choice(["FRA", "ESP", "PRT", "ITA", "BEL", "MAR", "TUN", "DZA"])
         nat_start = pos
-        parts.append(nationality)
-        pos += len(nationality)
-        entities.append([nat_start, pos, "Nationality", nationality])
+        parts.append(nationality + " ")
+        pos += len(nationality) + 1
+        entities.append([nat_start, pos - 1, "Nationality", nationality])
         
-        # Birth date
-        parts.append(" DATE DE NAISS. / Date of birth ")
-        pos += 32
+        # Birth date value
         birth_date = self.generate_date()
         birth_date_start = pos
         parts.append(birth_date)
@@ -518,8 +530,9 @@ class FakerIDGenerator:
         
         # Birth place (using Faker)
         if random.random() < 0.9:
-            parts.append(" LIEU DE NAISSANCE / Place of birth ")
-            pos += 36
+            birth_place_label = " LIEU DE NAISSANCE / Place of birth "
+            parts.append(birth_place_label)
+            pos += len(birth_place_label)
             
             city = self.generate_city()
             city_start = pos
@@ -528,8 +541,9 @@ class FakerIDGenerator:
             entities.append([city_start, pos, "Birth_place", city])
         
         # Document number
-        parts.append(" N° DU DOCUMENT / Document No ")
-        pos += 30
+        doc_num_label = " N° DU DOCUMENT / Document No "
+        parts.append(doc_num_label)
+        pos += len(doc_num_label)
         id_num = self.generate_id_number()
         id_start = pos
         parts.append(id_num)
@@ -538,8 +552,9 @@ class FakerIDGenerator:
         
         # Expiry date
         if random.random() < 0.8:
-            parts.append(" DATE D'EXPIR. / Expiry date ")
-            pos += 29
+            expiry_label = " DATE D'EXPIR. / Expiry date "
+            parts.append(expiry_label)
+            pos += len(expiry_label)
             
             expiry = self.generate_expiry_date(1980)
             expiry_start = pos
